@@ -98,6 +98,10 @@ export default function PlayPage() {
       setAiThinking(true)
       addMoveToHistory(uciMove)                          // ход игрока в историю
       const result = await api.makeAiMove(gameId, uciMove, difficulty)
+
+      if (result.ai_move) {
+        addMoveToHistory(result.ai_move, true)  // ← настоящий ход
+      }
       setAiThinking(false)
 
       if (result) {
@@ -171,12 +175,6 @@ export default function PlayPage() {
               {aiResult === "win"  ? "🏆 You won!" :
                aiResult === "loss" ? "You lost!" :
                                      "Draw!"}
-            </div>
-          )}
-          {isAiMode && aiThinking && (
-            <div className="mb-4 p-3 rounded-lg bg-secondary text-muted-foreground text-sm text-center flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              AI is thinking...
             </div>
           )}
 
