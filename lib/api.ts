@@ -135,4 +135,13 @@ export const api = {
   lobbyHeartbeat: async () => {
     await api.fetch("/lobby/heartbeat", { method: "POST" })
   },
+  
+  makeNeuralMove: async (gameId: number, uciMove: string, difficulty: string) => {
+    const res = await api.fetch(
+      `/chess/neural/${gameId}/move?uci_move=${encodeURIComponent(uciMove)}&difficulty=${difficulty}`,
+      { method: "POST" }
+    )
+    if (!res.ok) return null
+    return res.json()
+  },
 }

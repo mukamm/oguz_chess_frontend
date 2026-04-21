@@ -166,6 +166,8 @@ aiNoLimit: "No limit",
     welcomeBack: "Welcome back!",
     continueToGameDesc: "Your opponents are waiting. Time to start a match!",
     playNow: "Play Now",
+    aiNeural: "OguzAI",
+aiNeuralDesc: "My trained neural network",
 
   },
   ru: {
@@ -324,6 +326,8 @@ aiNoLimit: "Без лимита",
     welcomeBack: "С возвращением!",
     continueToGameDesc: "Твои противники уже заждались. Пора начинать партию!",
     playNow: "Играть сейчас",
+    aiNeural: "OguzAI",
+    aiNeuralDesc: "Моя обученная нейронная сеть",
 
 
   },
@@ -483,6 +487,8 @@ aiNoLimit: "Çäksiz",
     welcomeBack: "Hoş geldiňiz!",
     continueToGameDesc: "Garşydaşlaryňyz garaşýar. Oýna başlamagyň wagty geldi!",
     playNow: "Häzir oýna",
+    aiNeural: "OguzAI",
+    aiNeuralDesc: "Meniň öwredilen neýron torum",
   },
 }
 

@@ -40,37 +40,64 @@ export default function PlayPage() {
 
   const mode       = searchParams.get("mode")
   const difficulty = searchParams.get("difficulty") || "medium"
-  const isAiMode   = mode === "ai"
+  const isNeural = mode === "neural"
+const isAiMode = mode === "ai" || isNeural
 
-  useEffect(() => {
-    const existingGameId = searchParams.get("game_id")
-    const opponentId     = searchParams.get("opponent")
+ useEffect(() => {
+  const existingGameId = searchParams.get("game_id")
+  const opponentId = searchParams.get("opponent")
 
-    if (existingGameId) {
-      setGameId(Number(existingGameId))
-    } else if (user && !isAiMode) {
-      api.createChessGame(opponentId ? Number(opponentId) : undefined)
-        .then(game => {
-          if (game) {
-            setGameId(game.id)
-            router.replace(`/play?game_id=${game.id}`)
-          }
-        })
-    }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (existingGameId) {
+    setGameId(Number(existingGameId))
+  } else if (user && isAiMode) {
+    api.createAiGame().then(game => {
+      if (game) {
+        setGameId(game.id)
+        router.replace(`/play?mode=${mode}&game_id=${game.id}&difficulty=${difficulty}`)
+      }
+    })
+  } else if (user && !isAiMode) {
+    api.createChessGame(opponentId ? Number(opponentId) : undefined)
+      .then(game => {
+        if (game) {
+          setGameId(game.id)
+          router.replace(`/play?game_id=${game.id}`)
+        }
+      })
+  }
+}, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { fen, isMyTurn, isWhite, status, winner, error, sendMove, wsRef } =
     useChessGame(isAiMode ? 0 : (gameId ?? 0), isAiMode ? 0 : (user?.id ?? 0))
 
   // Таймер (только мультиплеер)
   useEffect(() => {
-    if (isAiMode || status !== "playing" || !gameId) return
+  // Для мультиплеера
+  if (!isAiMode) {
+    if (status !== "playing" || !gameId) return
     const timer = setInterval(() => {
       if (isMyTurn) setWhiteTime(prev => Math.max(0, prev - 1))
       else          setBlackTime(prev => Math.max(0, prev - 1))
     }, 1000)
     return () => clearInterval(timer)
-  }, [isMyTurn, status, gameId, isAiMode])
+  }
+
+  // Для AI режима
+  if (isAiMode) {
+    if (aiGameOver || aiThinking) return
+    const timer = setInterval(() => {
+      setWhiteTime(prev => {
+        if (prev <= 1) {
+          setAiGameOver(true)
+          setAiResult("loss") // время вышло = проигрыш
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }
+}, [isMyTurn, status, gameId, isAiMode, aiGameOver, aiThinking])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -94,36 +121,32 @@ export default function PlayPage() {
   }
 
   const handleMove = async (uciMove: string) => {
-    if (isAiMode && gameId) {
-      setAiThinking(true)
-      addMoveToHistory(uciMove)                          // ход игрока в историю
-      const result = await api.makeAiMove(gameId, uciMove, difficulty)
+  if (isAiMode && gameId) {
+    setAiThinking(true)
+    addMoveToHistory(uciMove)
 
-      if (result.ai_move) {
-        addMoveToHistory(result.ai_move, true)  // ← настоящий ход
+    // ← главное изменение
+    const result = isNeural
+      ? await api.makeNeuralMove(gameId, uciMove, difficulty)
+      : await api.makeAiMove(gameId, uciMove, difficulty)
+
+    if (result?.ai_move) addMoveToHistory(result.ai_move, true)
+    setAiThinking(false)
+
+    if (result) {
+      setAiFen(result.fen)
+      if (result.status === "finished") {
+        setAiGameOver(true)
+        if (result.winner === "player") setAiResult("win")
+        else if (result.winner === "ai") setAiResult("loss")
+        else setAiResult("draw")
       }
-      setAiThinking(false)
-
-      if (result) {
-        setAiFen(result.fen)
-
-        if (result.status === "finished") {
-          setAiGameOver(true)
-          // Берём winner из ответа API: "player" | "ai" | "draw"
-          if (result.winner === "player") setAiResult("win")
-          else if (result.winner === "ai") setAiResult("loss")
-          else setAiResult("draw")
-        } else {
-          // Если игра продолжается — AI сделал ответный ход, добавляем в историю
-          // Ход AI можно вычислить сравнив старый и новый FEN, но проще пометить как "..."
-          addMoveToHistory("...", true)
-        }
-      }
-    } else {
-      sendMove(uciMove)
-      addMoveToHistory(uciMove)
     }
+  } else {
+    sendMove(uciMove)
+    addMoveToHistory(uciMove)
   }
+}
 
   if (!user) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -194,29 +217,56 @@ export default function PlayPage() {
                     </Avatar>
                     <div>
                       <p className="font-semibold text-foreground text-sm sm:text-base">
-                        {isAiMode ? `AI Bot (${difficulty})` : (isWhite ? "Black Player" : "White Player")}
-                      </p>
-                      <div className="flex items-center gap-1 text-xs sm:text-sm">
-                        <Trophy className="w-3 h-3 text-primary" />
-                        <span className="text-muted-foreground">
-                          {isAiMode
-                            ? difficulty === "easy" ? "800-1200"
-                              : difficulty === "medium" ? "1200-1600"
-                              : "1600-2200"
-                            : "Opponent"} ELO
-                        </span>
-                      </div>
+  {isAiMode
+    ? isNeural
+      ? "🧠 OguzAI"
+      : `AI Bot (${difficulty})`
+    : (isWhite ? "Black Player" : "White Player")}
+</p>
+<div className="flex items-center gap-1 text-xs sm:text-sm">
+  <Trophy className="w-3 h-3 text-primary" />
+  <span className="text-muted-foreground">
+    {isNeural
+      ? "Neural Network"
+      : difficulty === "easy" ? "800-1200"
+      : difficulty === "medium" ? "1200-1600"
+      : "1600-2200"} ELO
+  </span>
+</div>
                     </div>
                   </div>
-                  {!isAiMode && (
-                    <div className={cn(
-                      "px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-xl font-bold transition-colors duration-300",
-                      !isMyTurn ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
-                    )}>
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
-                      {formatTime(blackTime)}
-                    </div>
-                  )}
+{isAiMode ? (
+  <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-xl font-bold bg-secondary text-foreground">
+    <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
+    ∞
+  </div>
+) : (
+  <div className={cn(
+    "px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-xl font-bold transition-colors duration-300",
+    !isMyTurn ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
+  )}>
+    <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
+    {formatTime(blackTime)}
+  </div>
+)}
+
+{isAiMode ? (
+  <div className={cn(
+    "px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-xl font-bold transition-colors duration-300",
+    whiteTime < 30 ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
+  )}>
+    <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
+    {formatTime(whiteTime)}
+  </div>
+) : (
+  <div className={cn(
+    "px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-xl font-bold transition-colors duration-300",
+    isMyTurn ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
+  )}>
+    <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
+    {formatTime(whiteTime)}
+  </div>
+)}
                 </CardContent>
               </Card>
 

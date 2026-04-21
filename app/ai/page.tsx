@@ -16,6 +16,7 @@ export default function AIModePage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState("5")
   const { t } = useI18n()
+  
 
   const difficulties = [
     {
@@ -51,6 +52,18 @@ export default function AIModePage() {
       borderColor: "border-destructive/50",
       hoverBorder: "hover:border-destructive",
     },
+    {
+      id: "neural",
+      nameKey: "aiNeural",
+      descKey: "aiNeuralDesc",
+      icon: Bot,
+      rating: "OguzAI",
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+      borderColor: "border-purple-500/50",
+      hoverBorder: "hover:border-purple-500",
+      neural: true,
+    },
   ]
 
   const timeControls = [
@@ -60,11 +73,14 @@ export default function AIModePage() {
     { id: "unlimited", labelKey: "aiNoLimit", label: null,      descKey: "aiCasual" },
   ]
 
-  const handleStartGame = async () => {
+const handleStartGame = async () => {
   if (!selectedDifficulty) return
   const game = await api.createAiGame()
   if (game) {
-    router.push(`/play?game_id=${game.id}&mode=ai&difficulty=${selectedDifficulty}&time=${selectedTime}`)
+    const isNeural = selectedDifficulty === "neural"
+    const mode = isNeural ? "neural" : "ai"
+    const difficulty = isNeural ? "medium" : selectedDifficulty
+    router.push(`/play?game_id=${game.id}&mode=${mode}&difficulty=${difficulty}&time=${selectedTime}`)
   }
 }
 
@@ -85,69 +101,108 @@ export default function AIModePage() {
             </div>
 
             {/* Difficulty Selection */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-primary" />
-                {t("aiSelectDifficulty")}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {difficulties.map((difficulty) => {
-                  const Icon = difficulty.icon
-                  const isSelected = selectedDifficulty === difficulty.id
-                  return (
-                    <Card
-                      key={difficulty.id}
-                      className={cn(
-                        "cursor-pointer transition-all duration-200 border-2",
-                        isSelected
-                          ? `${difficulty.borderColor} ${difficulty.bgColor}`
-                          : `border-border ${difficulty.hoverBorder}`
-                      )}
-                      onClick={() => setSelectedDifficulty(difficulty.id)}
-                    >
-                      <CardContent className="p-6 text-center">
-                        <div className={cn("w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4", difficulty.bgColor)}>
-                          <Icon className={cn("w-7 h-7", difficulty.color)} />
-                        </div>
-                        <h3 className="font-semibold text-foreground text-lg">{t(difficulty.nameKey as any)}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{t(difficulty.descKey as any)}</p>
-                        <div className={cn("mt-3 text-sm font-medium", difficulty.color)}>
-                          {difficulty.rating} ELO
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
+<div className="space-y-4">
+  <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+    <Cpu className="w-5 h-5 text-primary" />
+    {t("aiSelectDifficulty")}
+  </h2>
+
+  {/* 3 карточки сверху */}
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {difficulties.filter(d => !d.neural).map((difficulty) => {
+      const Icon = difficulty.icon
+      const isSelected = selectedDifficulty === difficulty.id
+      return (
+        <Card
+          key={difficulty.id}
+          className={cn(
+            "cursor-pointer transition-all duration-200 border-2",
+            isSelected
+              ? `${difficulty.borderColor} ${difficulty.bgColor}`
+              : `border-border ${difficulty.hoverBorder}`
+          )}
+          onClick={() => setSelectedDifficulty(difficulty.id)}
+        >
+          <CardContent className="p-6 text-center">
+            <div className={cn("w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4", difficulty.bgColor)}>
+              <Icon className={cn("w-7 h-7", difficulty.color)} />
             </div>
+            <h3 className="font-semibold text-foreground text-lg">{t(difficulty.nameKey as any)}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{t(difficulty.descKey as any)}</p>
+            <div className={cn("mt-3 text-sm font-medium", difficulty.color)}>
+              {difficulty.rating} ELO
+            </div>
+          </CardContent>
+        </Card>
+      )
+    })}
+  </div>
+
+  {/* OguzAI — полная ширина */}
+  {difficulties.filter(d => d.neural).map((difficulty) => {
+    const Icon = difficulty.icon
+    const isSelected = selectedDifficulty === difficulty.id
+    return (
+      <Card
+        key={difficulty.id}
+        className={cn(
+          "cursor-pointer transition-all duration-200 border-2 relative",
+          isSelected
+            ? `${difficulty.borderColor} ${difficulty.bgColor}`
+            : `border-border ${difficulty.hoverBorder}`,
+          "ring-1 ring-purple-500/30"
+        )}
+        onClick={() => setSelectedDifficulty(difficulty.id)}
+      >
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+          Neural Network
+        </div>
+        <CardContent className="p-6 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className={cn("w-14 h-14 rounded-xl flex items-center justify-center shrink-0", difficulty.bgColor)}>
+              <Icon className={cn("w-7 h-7", difficulty.color)} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-lg">OguzAI</h3>
+              <p className="text-sm text-muted-foreground mt-1">{t(difficulty.descKey as any)}</p>
+            </div>
+          </div>
+          <div className={cn("text-sm font-medium shrink-0", difficulty.color)}>
+            🧠 Trained on 835K games
+          </div>
+        </CardContent>
+      </Card>
+    )
+  })}
+</div>
 
             {/* Time Control */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                {t("aiTimeControl")}
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {timeControls.map((time) => (
-                  <Button
-                    key={time.id}
-                    variant="outline"
-                    className={cn(
-                      "h-auto py-4 flex flex-col items-center gap-1 transition-all",
-                      selectedTime === time.id
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border hover:border-primary"
-                    )}
-                    onClick={() => setSelectedTime(time.id)}
-                  >
-                    <span className="font-semibold text-lg">
-                      {time.labelKey ? t(time.labelKey as any) : time.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{t(time.descKey as any)}</span>
-                  </Button>
-                ))}
-              </div>
-            </div>
+<div className="space-y-4">
+  <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+    <Clock className="w-5 h-5 text-primary" />
+    {t("aiTimeControl")}
+  </h2>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {timeControls.map((time) => (
+      <Button
+        key={time.id}
+        variant="outline"
+        className={cn(
+          "h-auto py-4 flex flex-col items-center gap-1 transition-all",
+          selectedTime === time.id
+            ? "border-primary bg-primary/10 text-primary dark:bg-primary/25 dark:text-white pointer-events-none"
+            : "border-border hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:bg-primary/10 dark:hover:text-white"
+        )}
+        onClick={() => setSelectedTime(time.id)}
+      >
+        <span className="font-semibold text-lg">
+          {time.labelKey ? t(time.labelKey as any) : time.label}
+        </span>
+        <span className="text-xs text-muted-foreground">{t(time.descKey as any)}</span>
+      </Button>
+    ))}
+  </div>
+</div>
 
             {/* Start Game Button */}
             <div className="pt-4">
@@ -183,5 +238,7 @@ export default function AIModePage() {
         <Footer />
       </div>
     </>
+    
   )
+  
 }
