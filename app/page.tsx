@@ -1,5 +1,5 @@
 "use client"
-
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -19,6 +19,7 @@ import {
 
 export default function HomePage() {
   const { t } = useI18n()
+  
 
   const features = [
     {
@@ -48,6 +49,16 @@ export default function HomePage() {
     { value: "1M+", label: "Games Played" },
     { value: "24/7", label: "Online" },
   ]
+  
+  const [targetPath, setTargetPath] = useState('/login');
+  const [isAuth, setIsAuth] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      setIsAuth(true);
+      setTargetPath('/play');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -74,22 +85,23 @@ export default function HomePage() {
               {t("heroDesc")}
             </p>
             <div className="flex items-center justify-center gap-4 mt-10 flex-wrap">
-              <Link href="/register">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
-                  {t("startPlaying")}
-                  <ChevronRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link href="/lobby">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-border hover:border-primary hover:!bg-primary hover:!text-white px-8"
-                >
-                  <Swords className="w-5 h-5 mr-2" />
-                  {t("findMatch")}
-                </Button>
-              </Link>
+              <Link href={targetPath === '/play' ? '/play' : '/register'}>
+        <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
+          {t("startPlaying")}
+          <ChevronRight className="w-5 h-5 ml-2" />
+        </Button>
+      </Link>
+
+      <Link href={targetPath === '/play' ? '/lobby' : '/login'}>
+        <Button 
+          size="lg" 
+          variant="outline" 
+          className="border-border hover:border-primary hover:!bg-primary hover:!text-white px-8"
+        >
+          <Swords className="w-5 h-5 mr-2" />
+          {t("findMatch")}
+        </Button>
+      </Link>
             </div>
           </div>
           
@@ -127,32 +139,55 @@ export default function HomePage() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-24">
-        <div className="max-w-4xl mx-auto px-6">
-          <Card className="bg-card border-border overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
-            <CardContent className="p-12 text-center relative z-10">
-              <Crown className="w-16 h-16 text-primary mx-auto mb-6" />
-              <h2 className="text-3xl font-bold text-foreground">{t("readyToPlay")}</h2>
-              <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-                {t("readyToPlayDesc")}
-              </p>
-              <div className="flex items-center justify-center gap-4 mt-8 flex-wrap">
-                <Link href="/register">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
-                    {t("createAccount")}
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button size="lg" variant="outline" className="border-border hover:border-primary">
-                    {t("signIn")}
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+<section className="py-24">
+  <div className="max-w-4xl mx-auto px-6">
+    <Card className="bg-card border-border overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
+      <CardContent className="p-12 text-center relative z-10">
+        <Crown className="w-16 h-16 text-primary mx-auto mb-6" />
+        
+        {/* Заголовок меняется в зависимости от авторизации */}
+        <h2 className="text-3xl font-bold text-foreground">
+          {isAuth ? t("welcomeBack") : t("readyToPlay")}
+        </h2>
+        
+        <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+          {isAuth ? t("continueToGameDesc") : t("readyToPlayDesc")}
+        </p>
+
+        <div className="flex items-center justify-center gap-4 mt-8 flex-wrap">
+          {isAuth ? (
+            /* Если авторизован: одна большая кнопка "Играть" */
+            <Link href="/play">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 shadow-lg shadow-primary/20">
+                {t("playNow")}
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          ) : (
+            /* Если НЕ авторизован: кнопки регистрации и входа */
+            <>
+              <Link href="/register">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
+                  {t("createAccount")}
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-border hover:border-primary hover:!bg-primary hover:!text-white px-8"
+                >
+                  {t("signIn")}
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
-      </section>
+      </CardContent>
+    </Card>
+  </div>
+</section>
       
       <Footer />
     </div>

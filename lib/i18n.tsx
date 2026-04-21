@@ -162,6 +162,10 @@ aiBlitz: "Blitz",
 aiRapid: "Rapid",
 aiCasual: "Casual",
 aiNoLimit: "No limit",
+// Home page (new keys)
+    welcomeBack: "Welcome back!",
+    continueToGameDesc: "Your opponents are waiting. Time to start a match!",
+    playNow: "Play Now",
 
   },
   ru: {
@@ -316,6 +320,10 @@ aiBlitz: "Блиц",
 aiRapid: "Рапид",
 aiCasual: "Казуальный",
 aiNoLimit: "Без лимита",
+// Home page (новые ключи)
+    welcomeBack: "С возвращением!",
+    continueToGameDesc: "Твои противники уже заждались. Пора начинать партию!",
+    playNow: "Играть сейчас",
 
 
   },
@@ -471,6 +479,10 @@ aiBlitz: "Blits",
 aiRapid: "Çalt",
 aiCasual: "Güýmenjelik",
 aiNoLimit: "Çäksiz",
+// Home page (täze açarlar)
+    welcomeBack: "Hoş geldiňiz!",
+    continueToGameDesc: "Garşydaşlaryňyz garaşýar. Oýna başlamagyň wagty geldi!",
+    playNow: "Häzir oýna",
   },
 }
 

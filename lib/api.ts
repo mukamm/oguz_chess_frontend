@@ -83,6 +83,7 @@ export const api = {
   logout: async () => {
     await api.fetch("/logout", { method: "POST" })
     api.clearTokens()
+    window.location.href = "/"
   },
 
   // --- User ---

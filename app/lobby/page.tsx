@@ -55,7 +55,7 @@ export default function LobbyPage() {
                   onClick={() => setInviteModalOpen(true)}
                   variant="outline"
                   size="sm"
-                  className="border-border hover:border-primary text-xs sm:text-sm"
+                  className="border-border hover:border-primary hover:!bg-primary hover:!text-white px-8"
                 >
                   <UserPlus className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">{t("lobbyInviteFriend")}</span>
